@@ -269,42 +269,7 @@ class GradleRunner(object):
         self.__metrics.inc_counter('ReuseArtifact', labels)
         return True
 
-      if options.delete_existing:
-        for repo in exists:
-          self.bintray_repo_delete_version(repo, package_name, repository,
-                                           build_version=build_version)
-      else:
-        raise_and_log_error(
-            ConfigError('Already have debian for {name}'.format(
-                name=repository.name)))
     return False
-
-  def bintray_repo_delete_version(self, repo, package_name, repository,
-                                  build_version=None):
-    """Delete the given bintray repository version if it exsts."""
-    try:
-      bintray_url = self.__to_bintray_url(repo, package_name, repository,
-                                          build_version)
-      logging.debug('Checking for %s', bintray_url)
-      request = Request(url=bintray_url)
-      request.get_method = lambda: 'DELETE'
-      self.__add_bintray_auth_header(request)
-
-      labels = {
-          'repo': repo,
-          'repository': repository.name,
-          'artifact': 'debian'
-      }
-      self.__metrics.count_call(
-          'DeleteArtifact', labels, urlopen, request)
-      return True
-    except HTTPError as ex:
-      if ex.code == 404:
-        return True
-      raise_and_log_error(
-          ResponseError('Bintray failure: {}'.format(ex),
-                        server='bintray.delete'),
-          'Failed on url=%s: %s' % (bintray_url, exception_to_message(ex)))
 
   def get_debian_args(self, distribution):
     """Return the debian args for the given distribution name."""
