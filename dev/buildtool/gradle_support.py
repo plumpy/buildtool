@@ -14,17 +14,9 @@
 
 """Helper module for running gradle commands."""
 
-import base64
 import logging
 import os
 import re
-
-try:
-  from urllib2 import urlopen, Request
-  from urllib2 import HTTPError
-except ImportError:
-  from urllib.request import urlopen, Request
-  from urllib.error import HTTPError
 
 from buildtool import (
     RepositoryCommandFactory,
@@ -34,7 +26,6 @@ from buildtool import (
     add_parser_argument,
     check_subprocesses_to_logfile,
     raise_and_log_error,
-    exception_to_message,
     ConfigError,
     ResponseError)
 
@@ -196,80 +187,6 @@ class GradleRunner(object):
     self.__metrics = metrics
     self.__git = GitRunner(options)
     self.__scm = scm
-
-  def __to_bintray_url(self, repo, package_name, repository, build_version):
-    """Return the url for the desired versioned repository in bintray repo."""
-    bintray_path = (
-        'packages/{subject}/{repo}/{package}/versions/{version}'.format(
-            subject=self.__options.bintray_org,
-            package=package_name, repo=repo, version=build_version))
-    return 'https://api.bintray.com/' + bintray_path
-
-  def __add_bintray_auth_header(self, request):
-    """Adds bintray authentication header to the request."""
-    user = os.environ['BINTRAY_USER']
-    password = os.environ['BINTRAY_KEY']
-    encoded_auth = base64.b64encode('{user}:{password}'.format(user=user, password=password))
-    request.add_header('Authorization', 'Basic ' + bytes.decode(encoded_auth))
-
-  def bintray_repo_has_version(self, repo, package_name, repository,
-                               build_version):
-    """See if the given bintray repository has the package version to build."""
-    try:
-      bintray_url = self.__to_bintray_url(repo, package_name, repository,
-                                          build_version)
-      logging.debug('Checking for %s', bintray_url)
-      request = Request(url=bintray_url)
-      self.__add_bintray_auth_header(request)
-      urlopen(request)
-      return True
-    except HTTPError as ex:
-      if ex.code == 404:
-        return False
-      raise_and_log_error(
-          ResponseError('Bintray failure: {}'.format(ex),
-                        server='bintray.check'),
-          'Failed on url=%s: %s' % (bintray_url, exception_to_message(ex)))
-    except Exception as ex:
-      raise
-
-
-  def consider_debian_on_bintray(self, repository, build_version):
-    """Check whether desired version already exists on bintray."""
-    options = self.__options
-    exists = []
-    missing = []
-
-    # technically we publish to both maven and debian repos.
-    # we can be in a state where we are in one but not the other.
-    # let's not worry about this for now.
-    for bintray_repo in [options.bintray_debian_repository]:#,
-#                         options.bintray_jar_repository]:
-      package_name = repository.name
-      if bintray_repo == options.bintray_debian_repository:
-        if package_name == 'spinnaker-monitoring':
-          package_name = 'spinnaker-monitoring-daemon'
-        elif not package_name.startswith('spinnaker'):
-          package_name = 'spinnaker-' + package_name
-      if self.bintray_repo_has_version(
-          bintray_repo, package_name, repository, build_version):
-        exists.append(bintray_repo)
-      else:
-        missing.append(bintray_repo)
-
-    if exists:
-      if options.skip_existing:
-        if missing:
-          raise_and_log_error(
-              ConfigError('Have {name} version for {exists} but not {missing}'
-                          .format(name=repository.name,
-                                  exists=exists[0], missing=missing[0])))
-        logging.info('Already have %s -- skipping build', repository.name)
-        labels = {'repository': repository.name, 'artifact': 'debian'}
-        self.__metrics.inc_counter('ReuseArtifact', labels)
-        return True
-
-    return False
 
   def get_debian_args(self, distribution):
     """Return the debian args for the given distribution name."""
