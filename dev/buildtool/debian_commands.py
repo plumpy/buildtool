@@ -16,7 +16,6 @@
 
 import os
 import re
-from threading import Semaphore
 
 from buildtool import (
     BomSourceCodeManager,
@@ -37,15 +36,6 @@ class BuildDebianCommand(GradleCommandProcessor):
   def __init__(self, factory, options, **kwargs):
     options.github_disable_upstream_push = True
     super(BuildDebianCommand, self).__init__(factory, options, **kwargs)
-    self.__semaphore = Semaphore(options.max_local_builds)
-
-    if not os.environ.get('BINTRAY_KEY'):
-      raise_and_log_error(ConfigError('Expected BINTRAY_KEY set.'))
-    if not os.environ.get('BINTRAY_USER'):
-      raise_and_log_error(ConfigError('Expected BINTRAY_USER set.'))
-    check_options_set(
-        options, ['bintray_org', 'bintray_jar_repository',
-                  'bintray_debian_repository', 'bintray_publish_wait_secs'])
 
   def _do_can_skip_repository(self, repository):
     if repository.name in NON_DEBIAN_BOM_REPOSITORIES:
@@ -57,8 +47,6 @@ class BuildDebianCommand(GradleCommandProcessor):
   def _do_repository(self, repository):
     """Implements RepositoryCommandProcessor interface."""
     options = self.options
-    name = repository.name
-    args = self.gradle.get_common_args()
     cloudbuild_config = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), 'cloudbuild', 'debs.yml')
     service_name = self.scm.repository_name_to_service_name(repository.name)

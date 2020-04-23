@@ -306,20 +306,6 @@ class GradleRunner(object):
                         server='bintray.delete'),
           'Failed on url=%s: %s' % (bintray_url, exception_to_message(ex)))
 
-  def get_common_args(self):
-    """Return standard gradle args."""
-    options = self.__options
-    args = [
-        '--stacktrace',
-        '--info',
-    ]
-
-    if options.maven_custom_init_file:
-      # Note, this was only debians, not for rpms before.
-      args.append('-I {}'.format(options.maven_custom_init_file))
-
-    return args
-
   def get_debian_args(self, distribution):
     """Return the debian args for the given distribution name."""
     bintray_key = os.environ['BINTRAY_KEY']
