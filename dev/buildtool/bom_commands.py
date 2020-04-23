@@ -286,8 +286,6 @@ class BuildBomCommandFactory(RepositoryCommandFactory):
   def init_argparser(self, parser, defaults):
     super(BuildBomCommandFactory, self).init_argparser(parser, defaults)
     HalRunner.add_parser_args(parser, defaults)
-    buildtool.container_commands.add_bom_parser_args(parser, defaults)
-    buildtool.debian_commands.add_bom_parser_args(parser, defaults)
 
     self.add_argument(
         parser, 'publish_gce_image_project', defaults, None,
@@ -320,6 +318,17 @@ class BuildBomCommandFactory(RepositoryCommandFactory):
              ' This is intended only for speculative development where'
              ' some repositories are being modified and the remaing are'
              ' to come from a release branch.')
+
+    self.add_argument(
+        parser, 'docker_registry', defaults, None,
+        help='Docker registry where the container images are published.')
+    self.add_argument(
+        parser, 'bintray_org', defaults, None,
+        help='The bintray organization for the bintray_*_repositories.')
+    self.add_argument(
+        parser, 'bintray_debian_repository', defaults, None,
+        help='Repository in the --bintray_org where the debs are published.')
+
 
 
 class PublishBomCommand(RepositoryCommandProcessor):

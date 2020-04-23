@@ -20,8 +20,8 @@ import re
 from buildtool import (
     BomSourceCodeManager,
     BranchSourceCodeManager,
+    GcbCommandFactory,
     GradleCommandProcessor,
-    GradleCommandFactory,
 
     check_options_set,
     check_subprocesses_to_logfile,
@@ -77,34 +77,19 @@ class BuildDebianCommand(GradleCommandProcessor):
         repository.name + ' deb build', logfile, [command], cwd=repository.git_dir)
 
 
-class BuildDebianFactory(GradleCommandFactory):
-  @staticmethod
-  def add_bom_parser_args(parser, defaults):
-    """Adds publishing arguments of interest to the BOM commands as well."""
-    if hasattr(parser, 'added_debian'):
-      return
-    parser.added_debian = True
-    GradleCommandFactory.add_bom_parser_args(parser, defaults)
-
+class BuildDebianFactory(GcbCommandFactory):
   def init_argparser(self, parser, defaults):
+    """Adds command-specific arguments."""
     super(BuildDebianFactory, self).init_argparser(parser, defaults)
-
-    self.add_bom_parser_args(parser, defaults)
-    BranchSourceCodeManager.add_parser_args(parser, defaults)
     self.add_argument(
-        parser, 'gcb_project', defaults, None,
-        help='The GCP project ID when using the GCP Container Builder.')
+        parser, 'bintray_org', defaults, None,
+        help='The bintray organization for the bintray_debian_repository.')
     self.add_argument(
-        parser, 'gcb_service_account', defaults, None,
-        help='Google Service Account when using the GCP Container Builder.')
-
-
-def add_bom_parser_args(parser, defaults):
-  """Adds parser arguments pertaining to publishing boms."""
-  # These are implemented by the gradle factory, but conceptually
-  # for debians, so are exported this way.
-  BuildDebianFactory.add_bom_parser_args(parser, defaults)
-
+        parser, 'bintray_debian_repository', defaults, None,
+        help='Repository in the --bintray_org where the debs are published.')
+    self.add_argument(
+        parser, 'skip_existing', defaults, False, type=bool,
+        help='Skip builds if the desired version already exists on bintray.')
 
 def register_commands(registry, subparsers, defaults):
   build_debian_factory = BuildDebianFactory(

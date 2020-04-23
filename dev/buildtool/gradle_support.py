@@ -407,55 +407,6 @@ class GradleRunner(object):
     return build_number
 
 
-class GradleCommandFactory(RepositoryCommandFactory):
-  """Base class for build commands using Gradle."""
-  # pylint: disable=too-few-public-methods
-
-  @staticmethod
-  def add_bom_parser_args(parser, defaults):
-    """Adds publishing arguments of interest to the BOM commands as well."""
-    if hasattr(parser, 'added_gradle_bom'):
-      return
-    parser.added_gradle_bom = True
-
-    GradleCommandFactory.add_argument(
-        parser, 'bintray_org', defaults, None,
-        help='The bintray organization for the bintray_*_repositories.')
-
-    GradleCommandFactory.add_argument(
-        parser, 'bintray_debian_repository', defaults, None,
-        help='Repository in the --bintray_org to publish debians to.')
-
-    GradleCommandFactory.add_argument(
-        parser, 'bintray_publish_wait_secs', defaults, '0',
-        help='How many seconds to synchronously wait when publishing packages to'
-             'Bintray. When set to -1, wait the maximum time supported by the'
-             'server; when set to 0, publish asynchronously.')
-
-
-  def init_argparser(self, parser, defaults):
-    """Adds command-specific arguments."""
-    super(GradleCommandFactory, self).init_argparser(parser, defaults)
-    GradleRunner.add_parser_args(parser, defaults)
-    self.add_bom_parser_args(parser, defaults)
-
-    self.add_argument(
-        parser, 'skip_existing', defaults, False, type=bool,
-        help='Skip builds if the desired version already exists on bintray.')
-
-    self.add_argument(
-        parser, 'delete_existing', defaults, None, type=bool,
-        help='Delete pre-existing desired versions if from bintray.')
-
-    self.add_argument(
-        parser, 'max_local_builds', defaults, None, type=int,
-        help='Maximum build concurrency.')
-
-    self.add_argument(
-        parser, 'run_unit_tests', defaults, False, type=bool,
-        help='Run unit tests during build for all components other than Deck.')
-
-
 class GradleCommandProcessor(RepositoryCommandProcessor):
   """Base class for build commands using Gradle."""
   # pylint: disable=too-few-public-methods

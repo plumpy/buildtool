@@ -95,8 +95,10 @@ from buildtool.repository_command import (
     RepositoryCommandProcessor,
     RepositoryCommandFactory)
 
+from buildtool.gcb_support import (
+    GcbCommandFactory)
+
 from buildtool.gradle_support import (
-    GradleCommandFactory,
     GradleCommandProcessor,
     GradleRunner)
 

@@ -34,8 +34,8 @@ from buildtool import (
     BranchSourceCodeManager,
     CommandProcessor,
     CommandFactory,
+    GcbCommandFactory,
     GitRunner,
-    GradleCommandFactory,
     GradleCommandProcessor,
     GradleRunner,
     HalRunner,
@@ -265,7 +265,7 @@ class BuildHalyardCommand(GradleCommandProcessor):
     self.publish_halyard_version_commits(repository)
 
 
-class BuildHalyardFactory(GradleCommandFactory):
+class BuildHalyardFactory(GcbCommandFactory):
   """Implements the build_halyard command."""
   # pylint: disable=too-few-public-methods
 
@@ -298,26 +298,20 @@ class BuildHalyardFactory(GradleCommandFactory):
         defaults, None,
         help='Base Docker image name for writing halyard builds.')
     self.add_argument(
-        parser, 'gcb_project', defaults, None,
-        help='The GCP project ID when using the GCP Container Builder.')
-    self.add_argument(
-        parser, 'gcb_service_account', defaults, None,
-        help='Google Service Account when using the GCP Container Builder.')
-    self.add_argument(
-        parser, 'docker_registry', defaults, None,
-        help='Docker registry to push the container images to.')
+        parser, 'skip_existing', defaults, False, type=bool,
+        help='Skip builds if the desired version already exists on bintray.')
 
 
-class PublishHalyardCommandFactory(CommandFactory):
+class PublishHalyardCommandFactory(GcbCommandFactory):
   def __init__(self):
     super(PublishHalyardCommandFactory, self).__init__(
         'publish_halyard', PublishHalyardCommand,
-        'Publish a new halyard release.')
+        'Publish a new halyard release.',
+        BranchSourceCodeManager)
 
   def init_argparser(self, parser, defaults):
     super(PublishHalyardCommandFactory, self).init_argparser(
         parser, defaults)
-    GradleCommandFactory.add_bom_parser_args(parser, defaults)
     SpinnakerSourceCodeManager.add_parser_args(parser, defaults)
     GradleRunner.add_parser_args(parser, defaults)
     GitRunner.add_publishing_parser_args(parser, defaults)
@@ -351,23 +345,10 @@ class PublishHalyardCommandFactory(CommandFactory):
     self.add_argument(parser, 'docs_repo_owner', defaults, None,
                       help='Owner of the docs repo if one was'
                       ' specified. The default is --github_owner.')
-    self.add_argument(
-        parser, 'skip_existing', defaults, False, type=bool,
-        help='Skip builds if the desired version already exists on bintray.')
 
     self.add_argument(
         parser, 'delete_existing', defaults, None, type=bool,
         help='Delete pre-existing desired versions if from bintray.')
-
-    self.add_argument(
-        parser, 'gcb_project', defaults, None,
-        help='The GCP project ID when using the GCP Container Builder.')
-    self.add_argument(
-        parser, 'gcb_service_account', defaults, None,
-        help='Google Service Account when using the GCP Container Builder.')
-    self.add_argument(
-        parser, 'docker_registry', defaults, None,
-        help='Docker registry to push the container images to.')
 
 
 class PublishHalyardCommand(CommandProcessor):

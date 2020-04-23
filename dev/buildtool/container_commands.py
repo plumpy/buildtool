@@ -24,7 +24,7 @@ from buildtool import (
   SPINNAKER_HALYARD_REPOSITORY_NAME,
   BomSourceCodeManager,
   BranchSourceCodeManager,
-  GradleCommandFactory,
+  GcbCommandFactory,
   GradleCommandProcessor,
 
   check_subprocess,
@@ -109,37 +109,8 @@ class BuildContainerCommand(GradleCommandProcessor):
         check_subprocesses_to_logfile,
         name + ' container build', logfile, [command], cwd=repository.git_dir)
 
-class BuildContainerFactory(GradleCommandFactory):
-  @staticmethod
-  def add_bom_parser_args(parser, defaults):
-    """Adds publishing arguments of interest to the BOM commands as well."""
-    if hasattr(parser, 'added_container'):
-      return
-    parser.added_container = True
-    GradleCommandFactory.add_bom_parser_args(parser, defaults)
-
-    BuildContainerFactory.add_argument(
-        parser, 'docker_registry', defaults, None,
-        help='Docker registry to push the container images to.')
-
-  def init_argparser(self, parser, defaults):
-    super(BuildContainerFactory, self).init_argparser(parser, defaults)
-
-    self.add_bom_parser_args(parser, defaults)
-    BranchSourceCodeManager.add_parser_args(parser, defaults)
-    self.add_argument(
-        parser, 'gcb_project', defaults, None,
-        help='The GCP project ID that builds the containers when'
-        ' using Google Container Builder.')
-    self.add_argument(
-        parser, 'gcb_service_account', defaults, None,
-        help='Google Service Account when using the GCP Container Builder.')
-
-
-def add_bom_parser_args(parser, defaults):
-  """Adds parser arguments pertaining to publishing boms."""
-  BuildContainerFactory.add_bom_parser_args(parser, defaults)
-
+class BuildContainerFactory(GcbCommandFactory):
+  pass
 
 def register_commands(registry, subparsers, defaults):
   build_bom_containers_factory = BuildContainerFactory(
@@ -147,11 +118,4 @@ def register_commands(registry, subparsers, defaults):
       'Build one or more service containers from the local git repository.',
       BomSourceCodeManager)
 
-  build_hal_containers_factory = BuildContainerFactory(
-      'build_halyard_containers', BuildContainerCommand,
-      'Build one or more service containers from the local git repository.',
-      BranchSourceCodeManager,
-      source_repository_names=[SPINNAKER_HALYARD_REPOSITORY_NAME])
-
   build_bom_containers_factory.register(registry, subparsers, defaults)
-  build_hal_containers_factory.register(registry, subparsers, defaults)
