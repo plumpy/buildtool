@@ -25,14 +25,14 @@ from buildtool import (
   BomSourceCodeManager,
   BranchSourceCodeManager,
   GcbCommandFactory,
-  GradleCommandProcessor,
+  RepositoryCommandProcessor,
 
   check_subprocess,
   check_subprocesses_to_logfile
 )
 
 
-class BuildContainerCommand(GradleCommandProcessor):
+class BuildContainerCommand(RepositoryCommandProcessor):
   def __init__(self, factory, options, source_repository_names=None, **kwargs):
     # Use own repository to avoid race conditions when commands are
     # running concurrently.

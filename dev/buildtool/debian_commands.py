@@ -30,7 +30,7 @@ from buildtool import (
     BomSourceCodeManager,
     BranchSourceCodeManager,
     GcbCommandFactory,
-    GradleCommandProcessor,
+    RepositoryCommandProcessor,
 
     check_options_set,
     check_subprocesses_to_logfile,
@@ -43,7 +43,7 @@ from buildtool import (
 NON_DEBIAN_BOM_REPOSITORIES = ['spin']
 
 
-class BuildDebianCommand(GradleCommandProcessor):
+class BuildDebianCommand(RepositoryCommandProcessor):
   def __init__(self, factory, options, **kwargs):
     options.github_disable_upstream_push = True
     super(BuildDebianCommand, self).__init__(factory, options, **kwargs)

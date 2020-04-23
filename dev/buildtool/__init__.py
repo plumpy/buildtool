@@ -98,8 +98,4 @@ from buildtool.repository_command import (
 from buildtool.gcb_support import (
     GcbCommandFactory)
 
-from buildtool.gradle_support import (
-    GradleCommandProcessor,
-    GradleRunner)
-
 from buildtool.metrics import MetricsManager

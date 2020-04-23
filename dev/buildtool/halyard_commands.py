@@ -36,10 +36,8 @@ from buildtool import (
     CommandFactory,
     GcbCommandFactory,
     GitRunner,
-    GradleCommandProcessor,
-    GradleRunner,
     HalRunner,
-
+    RepositoryCommandProcessor,
     SpinnakerSourceCodeManager,
 
     run_subprocess,
@@ -66,7 +64,7 @@ def build_halyard_docs(command, repository):
       'Build halyard docs', logfile, ['make'], cwd=cli_dir)
 
 
-class BuildHalyardCommand(GradleCommandProcessor):
+class BuildHalyardCommand(RepositoryCommandProcessor):
   """Implements the build_halyard command."""
   # pylint: disable=too-few-public-methods
 
@@ -313,7 +311,6 @@ class PublishHalyardCommandFactory(GcbCommandFactory):
     super(PublishHalyardCommandFactory, self).init_argparser(
         parser, defaults)
     SpinnakerSourceCodeManager.add_parser_args(parser, defaults)
-    GradleRunner.add_parser_args(parser, defaults)
     GitRunner.add_publishing_parser_args(parser, defaults)
     HalRunner.add_parser_args(parser, defaults)
 
@@ -374,7 +371,6 @@ class PublishHalyardCommand(CommandProcessor):
 
     self.__scm = BranchSourceCodeManager(options_copy, self.get_input_dir())
     self.__hal = HalRunner(options_copy)
-    self.__gradle = GradleRunner(options_copy, self.__scm, self.metrics)
     self.__halyard_repo_md_path = os.path.join('docs', 'commands.md')
 
     dash = self.options.halyard_version.find('-')
