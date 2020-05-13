@@ -6,8 +6,11 @@ steps:
   - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
 - id: buildCompileImage
   waitFor: ["restoreCache"]
-  name: gcr.io/cloud-builders/docker
-  args: ["build", "-t", "compile", "-f", "Dockerfile.compile", "."]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true",
+  - "--dockerfile=Dockerfile.compile",
+  - "--destination=$_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME"
 - id: publishDeb
   waitFor: ["buildCompileImage"]
   name: compile
