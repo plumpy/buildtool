@@ -1,53 +1,53 @@
 steps:
-  - id: restoreCache
-    name: gcr.io/$PROJECT_ID/restore_cache:latest
-    args:
-      - "--bucket=gs://$_COMPILE_CACHE_BUCKET"
-      - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
-  - id: buildCompileImage
-    waitFor: ["restoreCache"]
-    name: gcr.io/cloud-builders/docker
-    args: [
-      "build",
-      "-t", "compile",
-      "-f", "Dockerfile.compile",
-      "--build-arg", "VERSION=$TAG_NAME",
-      "."
-    ]
-  - id: compile
-    waitFor: ["buildCompileImage"]
-    name: compile
-  - id: buildSlimImage
-    waitFor: ["compile"]
-    name: gcr.io/cloud-builders/docker
-    args: [
-            "build",
-            "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME",
-            "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim",
-            "-f", "Dockerfile.slim",
-            ".",
-          ]
-  - id: buildUbuntuImage
-    waitFor: ["compile"]
-    name: gcr.io/cloud-builders/docker
-    args: [
-            "build",
-            "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu",
-            "-f", "Dockerfile.ubuntu",
-            ".",
-          ]
-  - id: saveCache
-    waitFor: ["buildSlimImage", "buildUbuntuImage"]
-    name: gcr.io/$PROJECT_ID/save_cache:latest
-    args:
-      - "--bucket=gs://$_COMPILE_CACHE_BUCKET"
-      - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
-      - "--path=.gradle/caches"
-      - "--path=.gradle/wrapper"
+- id: restoreCache
+  name: gcr.io/$PROJECT_ID/restore_cache:latest
+  args:
+  - "--bucket=gs://$_COMPILE_CACHE_BUCKET"
+  - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
+- id: buildCompileImage
+  waitFor: ["restoreCache"]
+  name: gcr.io/cloud-builders/docker
+  args: [
+    "build",
+    "-t", "compile",
+    "-f", "Dockerfile.compile",
+    "--build-arg", "VERSION=$TAG_NAME",
+    "."
+  ]
+- id: compile
+  waitFor: ["buildCompileImage"]
+  name: compile
+- id: buildSlimImage
+  waitFor: ["compile"]
+  name: gcr.io/cloud-builders/docker
+  args: [
+    "build",
+    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME",
+    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim",
+    "-f", "Dockerfile.slim",
+    ".",
+  ]
+- id: buildUbuntuImage
+  waitFor: ["compile"]
+  name: gcr.io/cloud-builders/docker
+  args: [
+    "build",
+    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu",
+    "-f", "Dockerfile.ubuntu",
+    ".",
+  ]
+- id: saveCache
+  waitFor: ["buildSlimImage", "buildUbuntuImage"]
+  name: gcr.io/$PROJECT_ID/save_cache:latest
+  args:
+  - "--bucket=gs://$_COMPILE_CACHE_BUCKET"
+  - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
+  - "--path=.gradle/caches"
+  - "--path=.gradle/wrapper"
 images:
-  - $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME
-  - $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim
-  - $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu
+- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME
+- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim
+- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu
 tags: ["type_containers", "repo_$_IMAGE_NAME", "branch_$_BRANCH_TAG"]
 timeout: 3600s
 options:
