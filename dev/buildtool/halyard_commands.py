@@ -166,11 +166,13 @@ class BuildHalyardCommand(GradleCommandProcessor):
                             config_filename='debs.yml',
                             git_dir=git_dir,
                             substitutions={'_VERSION': summary.version,
-                                           '_BUILD_NUMBER': options.build_number}),
+                                           '_BUILD_NUMBER': options.build_number,
+                                           '_DOCKER_REGISTRY': options.docker_registry}),
         self.gcloud_command(name='halyard-tar-build',
                             config_filename='halyard-tars.yml',
                             git_dir=git_dir,
-                            substitutions={'TAG_NAME': self.__build_version}),
+                            substitutions={'TAG_NAME': self.__build_version,
+                                           '_DOCKER_REGISTRY': options.docker_registry}),
     ]
 
     pool = ThreadPool(len(commands))

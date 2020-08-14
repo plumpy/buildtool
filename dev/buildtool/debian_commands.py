@@ -67,7 +67,8 @@ class BuildDebianCommand(GradleCommandProcessor):
                      '_BRANCH_TAG': re.sub(r'\W', '_', options.git_branch),
                      '_IMAGE_NAME': service_name,
                      '_BUILD_NUMBER': source_info.build_number,
-                     '_VERSION': source_info.summary.version}
+                     '_VERSION': source_info.summary.version,
+                     '_DOCKER_REGISTRY': options.docker_registry}
     # Convert it to the format expected by gcloud: "_FOO=bar,_BAZ=qux"
     substitutions_arg = ','.join('='.join((str(k), str(v))) for k, v in
                                  substitutions.items())
@@ -109,6 +110,9 @@ class BuildDebianFactory(GradleCommandFactory):
     self.add_argument(
         parser, 'gcb_service_account', defaults, None,
         help='Google Service Account when using the GCP Container Builder.')
+    self.add_argument(
+        parser, 'docker_registry', defaults, None,
+        help='Docker registry to push the container images to.')
 
 
 def add_bom_parser_args(parser, defaults):

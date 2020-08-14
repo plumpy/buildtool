@@ -6,17 +6,16 @@ steps:
   - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
 - id: buildCompileImage
   waitFor: ["restoreCache"]
-  name: gcr.io/cloud-builders/docker
-  args: [
-    "build",
-    "-t", "compile",
-    "-f", "Dockerfile.compile",
-    "--build-arg", "VERSION=$_VERSION-$_BUILD_NUMBER",
-    "."
-  ]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true"
+  - "--cache-repo=$_KANIKO_CACHE"
+  - "--dockerfile=Dockerfile.compile"
+  - "--destination=$_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME"
+  - "--build-arg=VERSION=$TAG_NAME"
 - id: publishDeb
   waitFor: ["buildCompileImage"]
-  name: compile
+  name: $_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME
   args:
   - "./gradlew"
   - "--stacktrace"
@@ -59,7 +58,9 @@ timeout: 3600s
 options:
   machineType: N1_HIGHCPU_8
 substitutions:
-  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
-  _BINTRAY_PACKAGE_REPO: debians
   _BINTRAY_JAR_REPO: jars
+  _BINTRAY_PACKAGE_REPO: debians
   _BRANCH_TAG: unknown
+  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
+  _KANIKO_CACHE: us-docker.pkg.dev/spinnaker-community/kaniko-cache/cache
+

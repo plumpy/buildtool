@@ -6,17 +6,16 @@ steps:
   - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
 - id: buildCompileImage
   waitFor: ["restoreCache"]
-  name: gcr.io/cloud-builders/docker
-  args: [
-    "build",
-    "-t", "compile",
-    "-f", "Dockerfile.compile",
-    "--build-arg", "VERSION=$TAG_NAME",
-    "."
-  ]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true"
+  - "--cache-repo=$_KANIKO_CACHE"
+  - "--dockerfile=Dockerfile.compile"
+  - "--destination=$_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME"
+  - "--build-arg=VERSION=$TAG_NAME"
 - id: compile
   waitFor: ["buildCompileImage"]
-  name: compile
+  name: $_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME
 - id: createDebianTar
   waitFor: ["compile"]
   # We can't use Alpine because busybox's tar doesn't seem to support multiple
@@ -60,6 +59,8 @@ timeout: 3600s
 options:
   machineType: N1_HIGHCPU_8
 substitutions:
-  _HALYARD_BUCKET: spinnaker-artifacts
-  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
   _BRANCH_TAG: unknown
+  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
+  _HALYARD_BUCKET: spinnaker-artifacts
+  _KANIKO_CACHE: us-docker.pkg.dev/spinnaker-community/kaniko-cache/cache
+

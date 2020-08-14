@@ -6,36 +6,33 @@ steps:
   - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
 - id: buildCompileImage
   waitFor: ["restoreCache"]
-  name: gcr.io/cloud-builders/docker
-  args: [
-    "build",
-    "-t", "compile",
-    "-f", "Dockerfile.compile",
-    "--build-arg", "VERSION=$TAG_NAME",
-    "."
-  ]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true"
+  - "--cache-repo=$_KANIKO_CACHE"
+  - "--dockerfile=Dockerfile.compile"
+  - "--destination=$_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME"
+  - "--build-arg=VERSION=$TAG_NAME"
 - id: compile
   waitFor: ["buildCompileImage"]
-  name: compile
+  name: $_DOCKER_REGISTRY/compile-$_IMAGE_NAME:$_BRANCH_NAME
 - id: buildSlimImage
   waitFor: ["compile"]
-  name: gcr.io/cloud-builders/docker
-  args: [
-    "build",
-    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME",
-    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim",
-    "-f", "Dockerfile.slim",
-    ".",
-  ]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true"
+  - "--cache-repo=$_KANIKO_CACHE"
+  - "--dockerfile=Dockerfile.slim"
+  - "--destination=$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME"
+  - "--destination=$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim"
 - id: buildUbuntuImage
   waitFor: ["compile"]
-  name: gcr.io/cloud-builders/docker
-  args: [
-    "build",
-    "-t", "$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu",
-    "-f", "Dockerfile.ubuntu",
-    ".",
-  ]
+  name: gcr.io/kaniko-project/executor
+  args:
+  - "--cache=true"
+  - "--cache-repo=$_KANIKO_CACHE"
+  - "--dockerfile=Dockerfile.ubuntu"
+  - "--destination=$_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu"
 - id: saveCache
   waitFor: ["buildSlimImage", "buildUbuntuImage"]
   name: gcr.io/$PROJECT_ID/save_cache:latest
@@ -44,14 +41,11 @@ steps:
   - "--key=$_IMAGE_NAME-$_BRANCH_NAME"
   - "--path=.gradle/caches"
   - "--path=.gradle/wrapper"
-images:
-- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME
-- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-slim
-- $_DOCKER_REGISTRY/$_IMAGE_NAME:$TAG_NAME-ubuntu
 tags: ["type_containers", "repo_$_IMAGE_NAME", "branch_$_BRANCH_TAG"]
 timeout: 3600s
 options:
   machineType: N1_HIGHCPU_8
 substitutions:
-  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
   _BRANCH_TAG: unknown
+  _COMPILE_CACHE_BUCKET: spinnaker-build-cache
+  _KANIKO_CACHE: us-docker.pkg.dev/spinnaker-community/kaniko-cache/cache
