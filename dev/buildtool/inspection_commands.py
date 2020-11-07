@@ -139,7 +139,7 @@ class CollectBomVersions(CommandProcessor):
     # it all together when we're done processing for a single aggregate result.
     self.__per_thread_result_map = {}
 
-    self.__expect_docker_registry = options.docker_registry
+    self.__expect_docker_registry = options.artifact_registry
     self.__expect_debian_repository = (
         'https://dl.bintray.com/%s/%s' % (options.bintray_org,
                                           options.bintray_debian_repository)
@@ -433,7 +433,7 @@ class CollectBomVersionsFactory(CommandFactory):
         parser, 'halyard_bom_bucket', defaults, 'halconfig',
         help='The bucket managing halyard BOMs and config profiles.')
     self.add_argument(
-        parser, 'docker_registry', defaults, None,
+        parser, 'artifact_registry', defaults, None,
         help='The expected docker registry in boms.')
     self.add_argument(
         parser, 'bintray_org', defaults, None,
@@ -465,7 +465,7 @@ class CollectArtifactVersions(CommandProcessor):
         factory, options, **kwargs)
 
     check_options_set(options,
-                      ['docker_registry', 'bintray_org',
+                      ['artifact_registry', 'bintray_org',
                        'bintray_jar_repository', 'bintray_debian_repository'])
     user = os.environ.get('BINTRAY_USER')
     password = os.environ.get('BINTRAY_KEY')
@@ -602,11 +602,11 @@ class CollectArtifactVersions(CommandProcessor):
 
   def collect_gcb_versions(self, pool):
     options = self.options
-    logging.debug('Collecting GCB versions from %s', options.docker_registry)
+    logging.debug('Collecting GCB versions from %s', options.artifact_registry)
     command_parts = ['gcloud',
                      '--format=json',
                      'container images list',
-                     '--repository', options.docker_registry]
+                     '--repository', options.artifact_registry]
     if options.gcb_service_account:
       logging.debug('Using account %s', options.gcb_service_account)
       command_parts.extend(['--account', options.gcb_service_account])
@@ -622,8 +622,8 @@ class CollectArtifactVersions(CommandProcessor):
 
     path = os.path.join(
         self.get_output_dir(),
-        options.docker_registry.replace('/', '__') + '__gcb_versions.yml')
-    logging.info('Writing %s versions to %s', options.docker_registry, path)
+        options.artifact_registry.replace('/', '__') + '__gcb_versions.yml')
+    logging.info('Writing %s versions to %s', options.artifact_registry, path)
     write_to_path(yaml.safe_dump(image_map,
                                  allow_unicode=True,
                                  default_flow_style=False), path)
@@ -737,7 +737,7 @@ class CollectArtifactVersions(CommandProcessor):
         'bintray_org': options.bintray_org,
         'bintray_jar_repository': options.bintray_jar_repository,
         'bintray_debian_repository': options.bintray_debian_repository,
-        'docker_registry': options.docker_registry,
+        'docker_registry': options.artifact_registry,
         'googleImageProject': options.publish_gce_image_project
     }
     path = os.path.join(self.get_output_dir(), 'config.yml')
@@ -770,7 +770,7 @@ class CollectArtifactVersionsFactory(CommandFactory):
         parser, 'gcb_service_account', defaults, None,
         help='The service account to use when checking gcr images.')
     self.add_argument(
-        parser, 'docker_registry', defaults, None,
+        parser, 'artifact_registry', defaults, None,
         help='The GCB service account query image versions from.')
     self.add_argument(
         parser, 'build_gce_service_account', defaults, None,
